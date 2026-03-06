@@ -192,10 +192,12 @@ const styles = {
   },
   sidebarWrapperOpen: { transform: 'translateX(0)', boxShadow: '4px 0 40px rgba(0,0,0,0.8)' },
   main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
-  header: {
+ header: {
     height: 52, borderBottom: '1px solid #1a1a1a',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '0 16px', background: '#0d0d0d', flexShrink: 0,
+    position: 'relative', zIndex: 1,
+    paddingTop: 'env(safe-area-inset-top)',
   },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' },
   menuBtn: {
