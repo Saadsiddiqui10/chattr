@@ -4,6 +4,7 @@ export default function LoginScreen({ onJoin }) {
   const [username, setUsername] = useState('')
   const [room, setRoom] = useState('general')
   const [error, setError] = useState('')
+  const [focused, setFocused] = useState(false)
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -15,59 +16,71 @@ export default function LoginScreen({ onJoin }) {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.noise} />
-      <div style={styles.grid} />
+    <div style={s.container}>
+      <div style={s.bg} />
+      <div style={s.orb1} />
+      <div style={s.orb2} />
 
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <div style={styles.logo}>
-            <span style={styles.logoAccent}>///</span>CHATTER
+      <div style={s.card}>
+        <div style={s.cardGlow} />
+
+        <div style={s.brand}>
+          <div style={s.logoMark}>
+            <span style={s.logoIcon}>⚡</span>
           </div>
-          <p style={styles.tagline}>Real-time. No fluff.</p>
+          <div>
+            <div style={s.logo}>Chattr</div>
+            <div style={s.tagline}>Real-time messaging</div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.fieldGroup}>
-            <label style={styles.label}>USERNAME</label>
-            <input
-              style={styles.input}
-              value={username}
-              onChange={e => { setUsername(e.target.value); setError('') }}
-              placeholder="enter_handle"
-              maxLength={20}
-              autoFocus
-            />
-            {error && <span style={styles.error}>{error}</span>}
+        <form onSubmit={handleSubmit} style={s.form}>
+          <div style={s.field}>
+            <label style={s.label}>Your username</label>
+            <div style={{ ...s.inputWrap, ...(focused ? s.inputWrapFocused : {}) }}>
+              <span style={s.inputIcon}>@</span>
+              <input
+                style={s.input}
+                value={username}
+                onChange={e => { setUsername(e.target.value); setError('') }}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                placeholder="your_handle"
+                maxLength={20}
+                autoFocus
+              />
+            </div>
+            {error && <span style={s.error}>⚠ {error}</span>}
           </div>
 
-          <div style={styles.fieldGroup}>
-            <label style={styles.label}>ROOM</label>
-            <div style={styles.roomGrid}>
+          <div style={s.field}>
+            <label style={s.label}>Start in room</label>
+            <div style={s.roomGrid}>
               {['general', 'random', 'tech'].map(r => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRoom(r)}
-                  style={{ ...styles.roomBtn, ...(room === r ? styles.roomBtnActive : {}) }}
+                  style={{ ...s.roomBtn, ...(room === r ? s.roomBtnActive : {}) }}
                 >
-                  #{r}
+                  <span style={s.roomHash}>#</span>
+                  {r}
                 </button>
               ))}
             </div>
           </div>
 
-          <button type="submit" style={styles.submitBtn}>
-            <span>CONNECT</span>
-            <span style={styles.arrow}>→</span>
+          <button type="submit" style={s.submitBtn}>
+            <span>Join Chat</span>
+            <span style={s.submitArrow}>→</span>
           </button>
         </form>
 
-        <div style={styles.features}>
-          {['WebSocket powered', 'File sharing', 'Emoji reactions', 'Multiple rooms'].map(f => (
-            <div key={f} style={styles.feature}>
-              <span style={styles.dot} />
-              {f}
+        <div style={s.pills}>
+          {[['⚡', 'WebSockets'], ['📎', 'File sharing'], ['💬', 'Private DMs'], ['🔒', 'Private rooms']].map(([icon, label]) => (
+            <div key={label} style={s.pill}>
+              <span>{icon}</span>
+              <span style={s.pillText}>{label}</span>
             </div>
           ))}
         </div>
@@ -76,118 +89,111 @@ export default function LoginScreen({ onJoin }) {
   )
 }
 
-const styles = {
+const s = {
   container: {
-    height: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#0a0a0a',
-    position: 'relative',
-    overflow: 'hidden',
+    height: '100dvh', display: 'flex',
+    alignItems: 'center', justifyContent: 'center',
+    background: '#070b14', position: 'relative',
+    overflow: 'hidden', padding: 16,
   },
-  noise: {
+  bg: {
     position: 'absolute', inset: 0,
-    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
-    opacity: 0.4, pointerEvents: 'none',
+    background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,158,255,0.07) 0%, transparent 70%)',
+    pointerEvents: 'none',
   },
-  grid: {
-    position: 'absolute', inset: 0,
-    backgroundImage: 'linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px)',
-    backgroundSize: '60px 60px',
+  orb1: {
+    position: 'absolute', width: 400, height: 400,
+    borderRadius: '50%', top: '-10%', right: '-15%',
+    background: 'radial-gradient(circle, rgba(79,158,255,0.06) 0%, transparent 70%)',
+    pointerEvents: 'none',
+  },
+  orb2: {
+    position: 'absolute', width: 300, height: 300,
+    borderRadius: '50%', bottom: '5%', left: '-10%',
+    background: 'radial-gradient(circle, rgba(79,255,176,0.05) 0%, transparent 70%)',
     pointerEvents: 'none',
   },
   card: {
-    width: 420,
-    background: '#111',
-    border: '1px solid #2a2a2a',
-    padding: '48px 40px',
+    width: '100%', maxWidth: 420,
+    background: 'rgba(13,18,32,0.95)',
+    border: '1px solid #1e2d45',
+    borderRadius: 20,
+    padding: '36px 32px',
     position: 'relative',
-    boxShadow: '0 0 80px rgba(0,255,136,0.05), 0 40px 80px rgba(0,0,0,0.6)',
+    backdropFilter: 'blur(20px)',
+    boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,158,255,0.05)',
   },
-  header: { marginBottom: 40 },
-  logo: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: 32, fontWeight: 800,
-    letterSpacing: '-0.02em',
-    color: '#f0f0f0',
-    marginBottom: 8,
+  cardGlow: {
+    position: 'absolute', top: 0, left: '20%', right: '20%', height: 1,
+    background: 'linear-gradient(90deg, transparent, rgba(79,158,255,0.4), transparent)',
+    pointerEvents: 'none',
   },
-  logoAccent: { color: '#00ff88', marginRight: 4 },
-  tagline: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 11, color: '#555',
-    letterSpacing: '0.1em', textTransform: 'uppercase',
+  brand: { display: 'flex', alignItems: 'center', gap: 14, marginBottom: 32 },
+  logoMark: {
+    width: 44, height: 44, borderRadius: 12,
+    background: 'linear-gradient(135deg, #4f9eff, #4fffb0)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
   },
-  form: { display: 'flex', flexDirection: 'column', gap: 24 },
-  fieldGroup: { display: 'flex', flexDirection: 'column', gap: 8 },
-  label: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 10, color: '#555',
-    letterSpacing: '0.15em',
+  logoIcon: { fontSize: 20 },
+  logo: { fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: '#e8edf5' },
+  tagline: { fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#3d4f6a', letterSpacing: '0.05em', marginTop: 2 },
+  form: { display: 'flex', flexDirection: 'column', gap: 20 },
+  field: { display: 'flex', flexDirection: 'column', gap: 8 },
+  label: { fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#7a8ba8', letterSpacing: '0.1em', textTransform: 'uppercase' },
+  inputWrap: {
+    display: 'flex', alignItems: 'center',
+    background: '#070b14', border: '1.5px solid #1e2d45',
+    borderRadius: 10, overflow: 'hidden',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
   },
+  inputWrapFocused: {
+    borderColor: '#4f9eff',
+    boxShadow: '0 0 0 3px rgba(79,158,255,0.1)',
+  },
+  inputIcon: { padding: '0 12px', color: '#3d4f6a', fontSize: 14, fontFamily: "'Space Mono', monospace" },
   input: {
-    background: '#0a0a0a',
-    border: '1px solid #2a2a2a',
-    color: '#f0f0f0',
-    padding: '14px 16px',
-    fontSize: 16,
-    fontFamily: "'Space Mono', monospace",
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    width: '100%',
+    flex: 1, background: 'transparent', border: 'none',
+    color: '#e8edf5', padding: '13px 14px 13px 0',
+    fontSize: 15, outline: 'none',
+    fontFamily: "'Syne', sans-serif",
   },
-  error: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 11, color: '#ff3366',
-  },
+  error: { fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#ff4f8b' },
   roomGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 },
   roomBtn: {
-    background: '#0a0a0a',
-    border: '1px solid #2a2a2a',
-    color: '#555',
-    padding: '10px',
-    fontSize: 13,
-    fontFamily: "'Space Mono', monospace",
-    cursor: 'pointer',
+    background: '#070b14', border: '1.5px solid #1e2d45',
+    color: '#7a8ba8', padding: '10px 8px',
+    fontSize: 13, fontFamily: "'Space Mono', monospace",
+    cursor: 'pointer', borderRadius: 8,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
     transition: 'all 0.15s',
   },
   roomBtnActive: {
-    border: '1px solid #00ff88',
-    color: '#00ff88',
-    background: 'rgba(0,255,136,0.05)',
+    borderColor: '#4f9eff', color: '#4f9eff',
+    background: 'rgba(79,158,255,0.08)',
+    boxShadow: '0 0 0 3px rgba(79,158,255,0.08)',
   },
+  roomHash: { opacity: 0.5, fontSize: 11 },
   submitBtn: {
-    background: '#00ff88',
-    color: '#0a0a0a',
-    border: 'none',
-    padding: '16px 24px',
-    fontSize: 14,
-    fontWeight: 700,
-    fontFamily: "'Syne', sans-serif",
-    letterSpacing: '0.1em',
-    cursor: 'pointer',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    transition: 'background 0.15s, transform 0.1s',
+    background: 'linear-gradient(135deg, #4f9eff, #4fffb0)',
+    color: '#070b14', border: 'none',
+    padding: '15px 24px', fontSize: 15,
+    fontWeight: 800, fontFamily: "'Syne', sans-serif",
+    cursor: 'pointer', borderRadius: 10,
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 4,
+    boxShadow: '0 8px 24px rgba(79,158,255,0.25)',
+    transition: 'transform 0.1s, box-shadow 0.15s',
   },
-  arrow: { fontSize: 20 },
-  features: {
-    marginTop: 40,
-    paddingTop: 24,
-    borderTop: '1px solid #1a1a1a',
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10,
+  submitArrow: { fontSize: 18 },
+  pills: {
+    display: 'grid', gridTemplateColumns: '1fr 1fr',
+    gap: 8, marginTop: 28,
+    paddingTop: 24, borderTop: '1px solid #1e2d45',
   },
-  feature: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 10, color: '#444',
-    letterSpacing: '0.05em',
+  pill: {
+    display: 'flex', alignItems: 'center', gap: 7,
+    background: '#111827', borderRadius: 8, padding: '8px 10px',
   },
-  dot: {
-    width: 4, height: 4,
-    background: '#00ff88', borderRadius: '50%',
-    flexShrink: 0,
-  },
+  pillText: { fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#3d4f6a' },
 }

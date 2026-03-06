@@ -4,182 +4,200 @@ export default function Sidebar({ rooms, currentRoom, onSwitchRoom, users, usern
   const otherUsers = onlineUsers.filter(u => u.username !== username)
 
   return (
-    <div style={styles.sidebar}>
-      <div style={styles.logo}>
-        <span style={styles.logoAccent}>///</span>CHATTR
-      </div>
-
-      {/* Public Rooms */}
-      <div style={styles.section}>
-        <div style={styles.sectionHeader}>
-          <span style={styles.sectionLabel}>ROOMS</span>
-          <button style={styles.addBtn} onClick={onCreateRoom} title="Create room">+</button>
+    <div style={s.sidebar}>
+      <div style={s.header}>
+        <div style={s.brand}>
+          <div style={s.brandIcon}>⚡</div>
+          <span style={s.brandName}>Chattr</span>
         </div>
-        {publicRooms.map(room => (
-          <RoomButton key={room.name} room={room} active={currentRoom === room.name && !activeDmUser} onClick={() => onSwitchRoom(room)} />
-        ))}
+        <div style={s.onlineBadge}>
+          <div style={s.onlineDotSmall} />
+          <span style={s.onlineCount}>{onlineUsers.length}</span>
+        </div>
       </div>
 
-      {/* Private Rooms */}
-      {privateRooms.length > 0 && (
-        <div style={styles.section}>
-          <div style={styles.sectionHeader}>
-            <span style={styles.sectionLabel}>PRIVATE</span>
-          </div>
-          {privateRooms.map(room => (
-            <RoomButton key={room.name} room={room} active={currentRoom === room.name && !activeDmUser} onClick={() => onSwitchRoom(room)} />
+      <div style={s.scroll}>
+        <Section label="Rooms" action={{ label: '+', onClick: onCreateRoom }}>
+          {publicRooms.map(room => (
+            <RoomBtn key={room.name} room={room} active={currentRoom === room.name && !activeDmUser} onClick={() => onSwitchRoom(room)} />
           ))}
-        </div>
-      )}
+        </Section>
 
-      {/* Direct Messages */}
-      <div style={styles.section}>
-        <div style={styles.sectionHeader}>
-          <span style={styles.sectionLabel}>DIRECT MESSAGES</span>
-        </div>
-        {otherUsers.length === 0 && (
-          <div style={styles.noUsers}>No other users online</div>
+        {privateRooms.length > 0 && (
+          <Section label="Private">
+            {privateRooms.map(room => (
+              <RoomBtn key={room.name} room={room} active={currentRoom === room.name && !activeDmUser} onClick={() => onSwitchRoom(room)} />
+            ))}
+          </Section>
         )}
-        {otherUsers.map(user => (
-          <button
-            key={user.username}
-            style={{ ...styles.dmBtn, ...(activeDmUser === user.username ? styles.dmBtnActive : {}) }}
-            onClick={() => onOpenDm(user)}
-          >
-            <div style={{ position: 'relative' }}>
-              <div style={{ ...styles.dmAvatar, background: user.avatar?.color || '#333' }}>
-                {user.avatar?.initials}
+
+        <Section label="Direct Messages">
+          {otherUsers.length === 0
+            ? <div style={s.empty}>No one else online</div>
+            : otherUsers.map(user => (
+              <button
+                key={user.username}
+                style={{ ...s.dmBtn, ...(activeDmUser === user.username ? s.dmBtnActive : {}) }}
+                onClick={() => onOpenDm(user)}
+              >
+                <div style={s.dmAvatarWrap}>
+                  <div style={{ ...s.dmAvatar, background: user.avatar?.color || '#1e2d45' }}>
+                    {user.avatar?.initials}
+                  </div>
+                  <div style={s.onlineDot} />
+                </div>
+                <span style={s.dmName}>{user.username}</span>
+              </button>
+            ))
+          }
+        </Section>
+
+        <Section label={`In Room — ${roomUsers(users).length}`}>
+          {roomUsers(users).map(u => (
+            <div key={u.username} style={s.memberRow}>
+              <div style={{ ...s.memberAvatar, background: u.avatar?.color || '#1e2d45' }}>
+                {u.avatar?.initials}
               </div>
-              <div style={styles.onlineDot} />
+              <span style={{ ...s.memberName, ...(u.username === username ? s.memberNameSelf : {}) }}>
+                {u.username}{u.username === username ? ' · you' : ''}
+              </span>
             </div>
-            <span style={styles.dmUsername}>{user.username}</span>
-          </button>
-        ))}
+          ))}
+        </Section>
       </div>
 
-      {/* Current User */}
-      <div style={styles.footer}>
-        <div style={styles.footerUser}>
-          <div style={styles.footerDot} />
-          <span style={styles.footerUsername}>{username}</span>
+      <div style={s.footer}>
+        <div style={{ ...s.memberAvatar, background: '#1e2d45', width: 32, height: 32, fontSize: 11 }}>
+          {username.slice(0,2).toUpperCase()}
         </div>
-        <div style={styles.footerRoom}>in #{currentRoom}</div>
+        <div>
+          <div style={s.footerName}>{username}</div>
+          <div style={s.footerRoom}>#{currentRoom}</div>
+        </div>
       </div>
     </div>
   )
 }
 
-function RoomButton({ room, active, onClick }) {
+function roomUsers(users) { return users || [] }
+
+function Section({ label, action, children }) {
   return (
-    <button
-      onClick={onClick}
-      style={{ ...styles.roomBtn, ...(active ? styles.roomBtnActive : {}) }}
-    >
-      <span style={styles.roomHash}>{room.isPrivate ? '🔒' : '#'}</span>
-      <span style={styles.roomName}>{room.name}</span>
-      {room.userCount > 0 && (
-        <span style={styles.roomCount}>{room.userCount}</span>
-      )}
+    <div style={ss.section}>
+      <div style={ss.sectionHeader}>
+        <span style={ss.sectionLabel}>{label}</span>
+        {action && (
+          <button style={ss.sectionAction} onClick={action.onClick}>{action.label}</button>
+        )}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function RoomBtn({ room, active, onClick }) {
+  return (
+    <button onClick={onClick} style={{ ...ss.roomBtn, ...(active ? ss.roomBtnActive : {}) }}>
+      <span style={ss.roomIcon}>{room.isPrivate ? '🔒' : '#'}</span>
+      <span style={ss.roomName}>{room.name}</span>
+      {room.userCount > 0 && <span style={ss.roomCount}>{room.userCount}</span>}
     </button>
   )
 }
 
-const styles = {
+const s = {
   sidebar: {
-    width: 230,
-    background: '#0d0d0d',
-    borderRight: '1px solid #1a1a1a',
+    width: 240, height: '100dvh',
+    background: '#0a0f1e',
+    borderRight: '1px solid #1e2d45',
     display: 'flex', flexDirection: 'column',
-    flexShrink: 0, overflow: 'hidden',
-  },
-  logo: {
-    padding: '24px 20px 20px',
-    fontFamily: "'Syne', sans-serif",
-    fontSize: 18, fontWeight: 800,
-    letterSpacing: '-0.01em', color: '#f0f0f0',
-    borderBottom: '1px solid #1a1a1a',
     flexShrink: 0,
   },
-  logoAccent: { color: '#00ff88' },
-  section: { padding: '16px 12px 4px', overflowY: 'auto' },
-  sectionHeader: {
+  header: {
+    padding: '20px 16px',
+    borderBottom: '1px solid #1e2d45',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '0 8px', marginBottom: 6,
-  },
-  sectionLabel: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 9, color: '#444', letterSpacing: '0.15em',
-  },
-  addBtn: {
-    background: 'transparent', border: '1px solid #2a2a2a',
-    color: '#555', width: 18, height: 18,
-    fontSize: 14, cursor: 'pointer',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 3, lineHeight: 1,
-    transition: 'all 0.15s',
     flexShrink: 0,
   },
-  roomBtn: {
-    display: 'flex', alignItems: 'center', gap: 6,
-    width: '100%', padding: '7px 8px',
-    background: 'transparent', border: 'none',
-    color: '#555', cursor: 'pointer',
-    borderRadius: 4, textAlign: 'left',
-    transition: 'all 0.15s',
-    fontFamily: "'Syne', sans-serif",
+  brand: { display: 'flex', alignItems: 'center', gap: 10 },
+  brandIcon: {
+    width: 30, height: 30, borderRadius: 8,
+    background: 'linear-gradient(135deg, #4f9eff, #4fffb0)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 14,
   },
-  roomBtnActive: { background: 'rgba(0,255,136,0.08)', color: '#00ff88' },
-  roomHash: { fontSize: 12, opacity: 0.8, flexShrink: 0 },
-  roomName: { fontSize: 13, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  roomCount: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 9, color: '#444', background: '#1a1a1a',
-    padding: '1px 5px', borderRadius: 8,
+  brandName: { fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, color: '#e8edf5' },
+  onlineBadge: {
+    display: 'flex', alignItems: 'center', gap: 5,
+    background: '#111827', borderRadius: 20,
+    padding: '4px 10px', border: '1px solid #1e2d45',
   },
-  noUsers: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 10, color: '#333',
-    padding: '4px 8px', letterSpacing: '0.05em',
-  },
+  onlineDotSmall: { width: 6, height: 6, borderRadius: '50%', background: '#4fffb0' },
+  onlineCount: { fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#7a8ba8' },
+  scroll: { flex: 1, overflowY: 'auto', padding: '8px 0' },
+  empty: { fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#3d4f6a', padding: '4px 16px' },
   dmBtn: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    width: '100%', padding: '6px 8px',
+    display: 'flex', alignItems: 'center', gap: 10,
+    width: '100%', padding: '7px 16px',
     background: 'transparent', border: 'none',
-    color: '#555', cursor: 'pointer',
-    borderRadius: 4, textAlign: 'left',
-    transition: 'all 0.15s',
+    cursor: 'pointer', borderRadius: 0,
+    transition: 'background 0.1s',
   },
-  dmBtnActive: { background: 'rgba(0,136,255,0.08)', color: '#0088ff' },
+  dmBtnActive: { background: 'rgba(79,158,255,0.08)' },
+  dmAvatarWrap: { position: 'relative', flexShrink: 0 },
   dmAvatar: {
-    width: 26, height: 26, borderRadius: 3,
+    width: 28, height: 28, borderRadius: 8,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 9, fontWeight: 700, color: '#0a0a0a',
+    fontSize: 9, fontWeight: 700, color: '#070b14',
     fontFamily: "'Space Mono', monospace",
-    flexShrink: 0,
   },
   onlineDot: {
     position: 'absolute', bottom: -1, right: -1,
-    width: 7, height: 7,
-    background: '#00ff88', borderRadius: '50%',
-    border: '1.5px solid #0d0d0d',
+    width: 8, height: 8, background: '#4fffb0',
+    borderRadius: '50%', border: '2px solid #0a0f1e',
   },
-  dmUsername: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+  dmName: { fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#7a8ba8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  memberRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '5px 16px' },
+  memberAvatar: {
+    width: 26, height: 26, borderRadius: 7,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 9, fontWeight: 700, color: '#070b14',
+    fontFamily: "'Space Mono', monospace", flexShrink: 0,
   },
+  memberName: { fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#3d4f6a' },
+  memberNameSelf: { color: '#4f9eff' },
   footer: {
-    marginTop: 'auto', padding: '14px 20px',
-    borderTop: '1px solid #1a1a1a', flexShrink: 0,
+    padding: '14px 16px', borderTop: '1px solid #1e2d45',
+    display: 'flex', alignItems: 'center', gap: 10,
+    flexShrink: 0,
   },
-  footerUser: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 },
-  footerDot: { width: 7, height: 7, background: '#00ff88', borderRadius: '50%', flexShrink: 0 },
-  footerUsername: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 12, color: '#666',
-    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+  footerName: { fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 600, color: '#e8edf5' },
+  footerRoom: { fontFamily: "'Space Mono', monospace", fontSize: 9, color: '#3d4f6a', marginTop: 1 },
+}
+
+const ss = {
+  section: { padding: '16px 0 4px' },
+  sectionHeader: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '0 16px', marginBottom: 4,
   },
-  footerRoom: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 9, color: '#333', letterSpacing: '0.05em', paddingLeft: 15,
+  sectionLabel: { fontFamily: "'Space Mono', monospace", fontSize: 9, color: '#3d4f6a', letterSpacing: '0.12em', textTransform: 'uppercase' },
+  sectionAction: {
+    width: 18, height: 18, background: '#111827',
+    border: '1px solid #1e2d45', color: '#7a8ba8',
+    fontSize: 14, cursor: 'pointer', borderRadius: 4,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
   },
+  roomBtn: {
+    display: 'flex', alignItems: 'center', gap: 8,
+    width: '100%', padding: '7px 16px',
+    background: 'transparent', border: 'none',
+    color: '#7a8ba8', cursor: 'pointer',
+    textAlign: 'left', transition: 'all 0.1s',
+    fontFamily: "'Syne', sans-serif",
+  },
+  roomBtnActive: { background: 'rgba(79,158,255,0.08)', color: '#4f9eff' },
+  roomIcon: { fontSize: 12, flexShrink: 0, opacity: 0.7 },
+  roomName: { fontSize: 13, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  roomCount: { fontFamily: "'Space Mono', monospace", fontSize: 9, color: '#3d4f6a', background: '#111827', padding: '2px 6px', borderRadius: 10 },
 }
