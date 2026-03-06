@@ -35,19 +35,10 @@ export default function ChatInput({ onSend, onSendFile, onTyping, disabled }) {
     setShowEmoji(false)
   }
 
-  const uploadFile = useCallback(async (file) => {
-    if (!file) return
-    if (file.size > 5 * 1024 * 1024) return alert('File must be under 5MB')
-    setUploading(true)
-    try {
-      const form = new FormData()
-      form.append('file', file)
-      const res = await fetch(`${SERVER_URL}/upload`, { method: 'POST', body: form })
-      const data = await res.json()
-      onSendFile(data)
-    } catch { alert('Upload failed') }
-    finally { setUploading(false) }
-  }, [onSendFile])
+const uploadFile = useCallback(async (file) => {
+  if (!file) return
+  alert('📎 File sharing is not available in this version.')
+}, [onSendFile])
 
   const handleDrop = (e) => {
     e.preventDefault(); setDragOver(false)
