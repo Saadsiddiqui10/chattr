@@ -12,8 +12,9 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [currentRoom, setCurrentRoom] = useState('general')
   const [showCreateRoom, setShowCreateRoom] = useState(false)
-  const [passwordPrompt, setPasswordPrompt] = useState(null) // { room }
-  const [activeDm, setActiveDm] = useState(null) // { username, avatar }
+  const [passwordPrompt, setPasswordPrompt] = useState(null)
+  const [activeDm, setActiveDm] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const bottomRef = useRef()
 
   const {
@@ -35,10 +36,8 @@ export default function App() {
   }
 
   const handleSwitchRoom = async (room) => {
-    if (room.isPrivate) {
-      setPasswordPrompt(room)
-      return
-    }
+    setSidebarOpen(false)
+    if (room.isPrivate) { setPasswordPrompt(room); return }
     const result = await switchRoom(room.name)
     if (result?.error) return alert(result.error)
     setCurrentRoom(room.name)
@@ -57,7 +56,6 @@ export default function App() {
   const handleCreateRoom = async (roomData) => {
     const result = await createRoom(roomData)
     if (result?.success) {
-      // auto-join the new room
       await switchRoom(result.roomId, roomData.password)
       setCurrentRoom(result.roomId)
       setActiveDm(null)
@@ -67,25 +65,15 @@ export default function App() {
 
   const handleOpenDm = async (targetUser) => {
     setActiveDm(targetUser)
-    // Load history
+    setSidebarOpen(false)
     await getDmHistory(targetUser.username)
   }
 
-  const handleSendDm = (content) => {
-    if (!activeDm) return
-    sendDm(activeDm.username, content)
-  }
+  const handleSendDm = (content) => { if (activeDm) sendDm(activeDm.username, content) }
+  const handleSendDmFile = (fileInfo) => { if (activeDm) sendDmFile(activeDm.username, fileInfo) }
 
-  const handleSendDmFile = (fileInfo) => {
-    if (!activeDm) return
-    sendDmFile(activeDm.username, fileInfo)
-  }
-
-  // Get DM messages for active conversation
   const getDmId = (a, b) => [a, b].sort().join(':')
-  const activeDmMessages = activeDm
-    ? (dmThreads[getDmId(user, activeDm.username)] || [])
-    : []
+  const activeDmMessages = activeDm ? (dmThreads[getDmId(user, activeDm.username)] || []) : []
   const activeDmTyping = activeDm ? (dmTyping[activeDm.username] || false) : false
 
   if (!user) return <LoginScreen onJoin={handleJoin} />
@@ -94,31 +82,33 @@ export default function App() {
 
   return (
     <div style={styles.app}>
-      <Sidebar
-        rooms={rooms.length ? rooms : DEFAULT_ROOMS}
-        currentRoom={currentRoom}
-        onSwitchRoom={handleSwitchRoom}
-        users={roomUsers}
-        username={user}
-        onCreateRoom={() => setShowCreateRoom(true)}
-        onlineUsers={onlineUsers}
-        onOpenDm={handleOpenDm}
-        activeDmUser={activeDm?.username}
-      />
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div style={styles.overlay} onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <div style={{ ...styles.sidebarWrapper, ...(sidebarOpen ? styles.sidebarWrapperOpen : {}) }}>
+        <Sidebar
+          rooms={rooms.length ? rooms : DEFAULT_ROOMS}
+          currentRoom={currentRoom}
+          onSwitchRoom={handleSwitchRoom}
+          users={roomUsers}
+          username={user}
+          onCreateRoom={() => { setShowCreateRoom(true); setSidebarOpen(false) }}
+          onlineUsers={onlineUsers}
+          onOpenDm={handleOpenDm}
+          activeDmUser={activeDm?.username}
+        />
+      </div>
 
       {/* Main chat area */}
       <div style={styles.main}>
         <div style={styles.header}>
           <div style={styles.headerLeft}>
+            <button style={styles.menuBtn} onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
             <span style={styles.headerHash}>{currentRoomInfo?.isPrivate ? '🔒' : '#'}</span>
             <span style={styles.headerRoom}>{currentRoom}</span>
-            {currentRoomInfo?.description && (
-              <><span style={styles.headerDivider}>—</span>
-              <span style={styles.headerDesc}>{currentRoomInfo.description}</span></>
-            )}
-            {currentRoomInfo?.isPrivate && (
-              <span style={styles.privateBadge}>PRIVATE</span>
-            )}
+            {currentRoomInfo?.isPrivate && <span style={styles.privateBadge}>PRIVATE</span>}
           </div>
           <div style={styles.headerRight}>
             <div style={{ ...styles.statusDot, background: connected ? '#00ff88' : '#ff3366' }} />
@@ -130,23 +120,17 @@ export default function App() {
         <div style={styles.messages}>
           {messages.length === 0 && (
             <div style={styles.empty}>
-              <div style={styles.emptyTitle}>
-                {currentRoomInfo?.isPrivate ? '🔒' : '#'}{currentRoom}
-              </div>
+              <div style={styles.emptyTitle}>{currentRoomInfo?.isPrivate ? '🔒' : '#'}{currentRoom}</div>
               <div style={styles.emptyText}>Start of channel. Say hi!</div>
             </div>
           )}
-
           {messages.map((msg, i) => (
             <Message key={msg.id} msg={msg} isOwn={msg.username === user} prevMsg={messages[i - 1]} />
           ))}
-
           {typingUsers.length > 0 && (
             <div style={styles.typing}>
               <div style={styles.typingDots}>
-                {[0,150,300].map(d => (
-                  <span key={d} style={{ ...styles.typingDot, animationDelay: `${d}ms` }} />
-                ))}
+                {[0,150,300].map(d => <span key={d} style={{ ...styles.typingDot, animationDelay: `${d}ms` }} />)}
               </div>
               <span style={styles.typingText}>
                 {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing
@@ -156,15 +140,10 @@ export default function App() {
           <div ref={bottomRef} />
         </div>
 
-        <ChatInput
-          onSend={sendMessage}
-          onSendFile={sendFile}
-          onTyping={setTyping}
-          disabled={!connected}
-        />
+        <ChatInput onSend={sendMessage} onSendFile={sendFile} onTyping={setTyping} disabled={!connected} />
       </div>
 
-      {/* DM Panel */}
+      {/* DM Panel — fullscreen on mobile */}
       {activeDm && (
         <DmPanel
           myUsername={user}
@@ -178,24 +157,15 @@ export default function App() {
         />
       )}
 
-      {/* Modals */}
-      {showCreateRoom && (
-        <CreateRoomModal
-          onClose={() => setShowCreateRoom(false)}
-          onCreate={handleCreateRoom}
-        />
-      )}
-
-      {passwordPrompt && (
-        <PasswordModal
-          roomName={passwordPrompt.name}
-          onClose={() => setPasswordPrompt(null)}
-          onSubmit={handlePasswordSubmit}
-        />
-      )}
+      {showCreateRoom && <CreateRoomModal onClose={() => setShowCreateRoom(false)} onCreate={handleCreateRoom} />}
+      {passwordPrompt && <PasswordModal roomName={passwordPrompt.name} onClose={() => setPasswordPrompt(null)} onSubmit={handlePasswordSubmit} />}
 
       <style>{`
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+        @media (min-width: 768px) {
+          .sidebar-wrapper { position: static !important; transform: none !important; box-shadow: none !important; }
+          .menu-btn { display: none !important; }
+        }
       `}</style>
     </div>
   )
@@ -208,27 +178,39 @@ const DEFAULT_ROOMS = [
 ]
 
 const styles = {
-  app: { height: '100vh', display: 'flex', background: '#0a0a0a', overflow: 'hidden' },
+  app: { height: '100vh', display: 'flex', background: '#0a0a0a', overflow: 'hidden', position: 'relative' },
+  overlay: {
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+    zIndex: 40, display: 'block',
+  },
+  sidebarWrapper: {
+    position: 'fixed', top: 0, left: 0, height: '100vh',
+    transform: 'translateX(-100%)',
+    transition: 'transform 0.25s ease',
+    zIndex: 50,
+    '@media (min-width: 768px)': { position: 'static', transform: 'none' },
+  },
+  sidebarWrapperOpen: { transform: 'translateX(0)', boxShadow: '4px 0 40px rgba(0,0,0,0.8)' },
   main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
   header: {
     height: 52, borderBottom: '1px solid #1a1a1a',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '0 20px', background: '#0d0d0d', flexShrink: 0,
+    padding: '0 16px', background: '#0d0d0d', flexShrink: 0,
   },
   headerLeft: { display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' },
+  menuBtn: {
+    background: 'transparent', border: 'none',
+    color: '#888', fontSize: 18, cursor: 'pointer',
+    padding: '4px 8px 4px 0', flexShrink: 0,
+  },
   headerHash: { fontFamily: "'Space Mono', monospace", fontSize: 14, color: '#444', flexShrink: 0 },
   headerRoom: { fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 700, color: '#f0f0f0', flexShrink: 0 },
-  headerDivider: { color: '#333', fontSize: 14, flexShrink: 0 },
-  headerDesc: { fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   privateBadge: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: 8, color: '#ff9900',
-    background: 'rgba(255,153,0,0.1)',
-    border: '1px solid rgba(255,153,0,0.3)',
-    padding: '2px 6px', letterSpacing: '0.1em',
-    flexShrink: 0,
+    fontFamily: "'Space Mono', monospace", fontSize: 8, color: '#ff9900',
+    background: 'rgba(255,153,0,0.1)', border: '1px solid rgba(255,153,0,0.3)',
+    padding: '2px 6px', letterSpacing: '0.1em', flexShrink: 0,
   },
-  headerRight: { display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 },
+  headerRight: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 },
   statusDot: { width: 7, height: 7, borderRadius: '50%' },
   statusText: { fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#444', letterSpacing: '0.05em' },
   memberCount: { fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#555', background: '#1a1a1a', padding: '3px 8px', borderRadius: 10 },

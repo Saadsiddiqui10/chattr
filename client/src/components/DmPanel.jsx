@@ -173,12 +173,14 @@ export default function DmPanel({ myUsername, withUser, messages, isTyping, onSe
 }
 
 const styles = {
-  panel: {
-    width: 360, height: '100vh',
+panel: {
+    position: 'fixed', inset: 0,
+    width: '100%', height: '100vh',
     background: '#0d0d0d',
     borderLeft: '1px solid #1a1a1a',
     display: 'flex', flexDirection: 'column',
-    flexShrink: 0,
+    zIndex: 30,
+    '@media (min-width: 768px)': { position: 'static', width: 360 },
   },
   header: {
     height: 56, borderBottom: '1px solid #1a1a1a',
